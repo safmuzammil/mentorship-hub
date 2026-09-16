@@ -104,6 +104,15 @@ export default function StudentDetail() {
                 Start Test &rarr;
               </Link>
             </div>
+            <div className="bg-purple-50 p-6 rounded-xl shadow-sm border border-purple-100 flex justify-between items-center mt-4 mb-6">
+              <div>
+                <h2 className="font-bold text-lg text-purple-900">MBTI Assessment</h2>
+                <p className="text-sm text-purple-700">Determine personality type</p>
+              </div>
+              <Link href={`/student/${id}/mbti`} className="bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm hover:bg-purple-700">
+                Start Test &rarr;
+              </Link>
+            </div>
             {/* Goals Tracker */}
             <div className="bg-amber-50 p-6 rounded-xl shadow-sm border border-amber-100">
               <h2 className="font-bold text-lg mb-4 text-amber-900">Active Goals</h2>
