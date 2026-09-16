@@ -13,11 +13,9 @@ export default function StudentDetail() {
   const [student, setStudent] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   
-  // New State for interactive inputs
   const [newGoal, setNewGoal] = useState('');
   const [newAchievement, setNewAchievement] = useState('');
 
-  // Fetch the student data
   useEffect(() => {
     const fetchStudent = async () => {
       try {
@@ -35,7 +33,6 @@ export default function StudentDetail() {
     if (id) fetchStudent();
   }, [id]);
 
-  // Function to save a new Goal
   const handleAddGoal = async () => {
     if (!newGoal.trim()) return;
     const docRef = doc(db, 'students', id);
@@ -44,7 +41,6 @@ export default function StudentDetail() {
     setNewGoal('');
   };
 
-  // Function to save a new Achievement
   const handleAddAchievement = async () => {
     if (!newAchievement.trim()) return;
     const docRef = doc(db, 'students', id);
@@ -58,74 +54,78 @@ export default function StudentDetail() {
 
   return (
     <main className="min-h-screen p-8 bg-gray-50 text-gray-900">
-      <div className="max-w-5xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         <Link href="/" className="text-blue-600 text-sm mb-6 inline-block hover:underline">
           &larr; Back to Dashboard
         </Link>
         
         {/* Profile Header */}
-        <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100 mb-6 flex justify-between items-start">
+        <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-100 mb-6 flex flex-col md:flex-row justify-between items-start md:items-center">
           <div>
             <h1 className="text-4xl font-bold capitalize mb-2">{student.name}</h1>
             <p className="text-xl text-gray-600">{student.major}</p>
-            <span className="inline-block mt-4 bg-slate-800 text-white text-sm px-3 py-1 rounded-full mr-2">
-              {student.aiProfile?.mbti_estimation || "MBTI Pending"}
-            </span>
-            <span className="inline-block mt-4 bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full">
-              {student.learningStyle || "VARK Pending"}
-            </span>
+            <div className="mt-4 flex gap-2">
+              <span className="inline-block bg-slate-800 text-white text-sm px-3 py-1 rounded-full">
+                {student.mbtiAssessment?.type || student.aiProfile?.mbti_estimation || "MBTI Pending"}
+              </span>
+              <span className="inline-block bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full">
+                {student.varkAssessment?.primaryStyle || "VARK Pending"}
+              </span>
+            </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           
           {/* Left Column: AI Analysis */}
-          <div className="md:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-6">
             <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-l-blue-500">
               <h2 className="font-bold text-lg mb-2">Academic Analysis</h2>
-              <p className="text-gray-700">{student.aiProfile?.academic_analysis || "No data yet."}</p>
+              <p className="text-gray-700 whitespace-pre-wrap">{student.aiProfile?.academic_analysis || "No data yet. Complete the assessments to generate insights."}</p>
             </div>
             
             <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-l-green-500">
-              <span className="inline-block mt-4 bg-slate-800 text-white text-sm px-3 py-1 rounded-full mr-2">
-              {student.mbtiAssessment?.type || student.aiProfile?.mbti_estimation || "MBTI Pending"}
-            </span>
-            <span className="inline-block mt-4 bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full">
-              {student.varkAssessment?.primaryStyle || "VARK Pending"}
-            </span>
+              <h2 className="font-bold text-lg mb-2">Spiritual Analysis</h2>
+              <p className="text-gray-700 whitespace-pre-wrap">{student.aiProfile?.spiritual_analysis || "No data yet. Complete the spiritual indicator to generate insights."}</p>
             </div>
           </div>
 
-          {/* Right Column: Goals & Achievements */}
+          {/* Right Column: Tests, Goals & Achievements */}
           <div className="space-y-6">
-            {/* Quick Assessments */}
-            <div className="bg-blue-50 p-6 rounded-xl shadow-sm border border-blue-100 mb-6 flex justify-between items-center">
-              <div>
-                <h2 className="font-bold text-lg text-blue-900">VARK Assessment</h2>
-                <p className="text-sm text-blue-700">Determine learning style</p>
+            
+            {/* Assessment Buttons */}
+            <div className="space-y-3">
+              <div className="bg-blue-50 p-4 rounded-xl shadow-sm border border-blue-100 flex justify-between items-center">
+                <div>
+                  <h2 className="font-bold text-blue-900">VARK Test</h2>
+                  <p className="text-xs text-blue-700">Learning style</p>
+                </div>
+                <Link href={`/student/${id}/vark`} className="bg-blue-600 text-white px-3 py-2 rounded-lg text-sm font-bold shadow-sm hover:bg-blue-700 transition">
+                  Start &rarr;
+                </Link>
               </div>
-              <Link href={`/student/${id}/vark`} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm hover:bg-blue-700">
-                Start Test &rarr;
-              </Link>
-            </div>
-            <div className="bg-purple-50 p-6 rounded-xl shadow-sm border border-purple-100 flex justify-between items-center mt-4 mb-6">
-              <div>
-                <h2 className="font-bold text-lg text-purple-900">MBTI Assessment</h2>
-                <p className="text-sm text-purple-700">Determine personality type</p>
+
+              <div className="bg-purple-50 p-4 rounded-xl shadow-sm border border-purple-100 flex justify-between items-center">
+                <div>
+                  <h2 className="font-bold text-purple-900">MBTI Test</h2>
+                  <p className="text-xs text-purple-700">Personality</p>
+                </div>
+                <Link href={`/student/${id}/mbti`} className="bg-purple-600 text-white px-3 py-2 rounded-lg text-sm font-bold shadow-sm hover:bg-purple-700 transition">
+                  Start &rarr;
+                </Link>
               </div>
-              <Link href={`/student/${id}/mbti`} className="bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm hover:bg-purple-700">
-                Start Test &rarr;
-              </Link>
-            </div>
-            <div className="bg-green-50 p-6 rounded-xl shadow-sm border border-green-100 flex justify-between items-center mb-6">
-              <div>
-                <h2 className="font-bold text-lg text-green-900">Spiritual Indicator</h2>
-                <p className="text-sm text-green-700">Determine Tarbiyah metrics</p>
+
+              <div className="bg-green-50 p-4 rounded-xl shadow-sm border border-green-100 flex justify-between items-center">
+                <div>
+                  <h2 className="font-bold text-green-900">Spiritual Test</h2>
+                  <p className="text-xs text-green-700">Tarbiyah metrics</p>
+                </div>
+                <Link href={`/student/${id}/spiritual`} className="bg-green-600 text-white px-3 py-2 rounded-lg text-sm font-bold shadow-sm hover:bg-green-700 transition">
+                  Start &rarr;
+                </Link>
               </div>
-              <Link href={`/student/${id}/spiritual`} className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm hover:bg-green-700">
-                Start Test &rarr;
-              </Link>
             </div>
+
             {/* Goals Tracker */}
             <div className="bg-amber-50 p-6 rounded-xl shadow-sm border border-amber-100">
               <h2 className="font-bold text-lg mb-4 text-amber-900">Active Goals</h2>
@@ -133,17 +133,10 @@ export default function StudentDetail() {
                 {student.goals?.map((goal: string, i: number) => <li key={i}>{goal}</li>) || <p className="text-xs text-amber-700 italic">No goals set yet.</p>}
               </ul>
               <div className="flex gap-2">
-                <input 
-                  type="text" 
-                  value={newGoal} 
-                  onChange={(e) => setNewGoal(e.target.value)} 
-                  placeholder="Add a new goal..." 
-                  className="w-full text-sm p-2 border rounded"
-                />
+                <input type="text" value={newGoal} onChange={(e) => setNewGoal(e.target.value)} placeholder="Add goal..." className="w-full text-sm p-2 border rounded" />
                 <button onClick={handleAddGoal} className="bg-amber-600 text-white px-3 py-2 rounded text-sm font-bold">+</button>
               </div>
             </div>
-            
 
             {/* Achievements Tracker */}
             <div className="bg-emerald-50 p-6 rounded-xl shadow-sm border border-emerald-100">
@@ -152,13 +145,7 @@ export default function StudentDetail() {
                 {student.achievements?.map((ach: string, i: number) => <li key={i}>{ach}</li>) || <p className="text-xs text-emerald-700 italic">No achievements logged yet.</p>}
               </ul>
               <div className="flex gap-2">
-                <input 
-                  type="text" 
-                  value={newAchievement} 
-                  onChange={(e) => setNewAchievement(e.target.value)} 
-                  placeholder="Log an achievement..." 
-                  className="w-full text-sm p-2 border rounded"
-                />
+                <input type="text" value={newAchievement} onChange={(e) => setNewAchievement(e.target.value)} placeholder="Log win..." className="w-full text-sm p-2 border rounded" />
                 <button onClick={handleAddAchievement} className="bg-emerald-600 text-white px-3 py-2 rounded text-sm font-bold">+</button>
               </div>
             </div>
