@@ -1,69 +1,86 @@
-import Image from "next/image";
+'use client'; 
+
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { collection, getDocs, orderBy, query } from 'firebase/firestore';
+import { db } from './firebase'; 
+
+type Student = {
+  id: string;
+  name: string;
+  major: string;
+  aiProfile: any;
+};
 
 export default function Home() {
+  const [students, setStudents] = useState<Student[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStudents = async () => {
+      try {
+        const q = query(collection(db, 'students'), orderBy('createdAt', 'desc'));
+        const querySnapshot = await getDocs(q);
+        
+        const studentData: Student[] = [];
+        querySnapshot.forEach((doc) => {
+          studentData.push({ id: doc.id, ...doc.data() } as Student);
+        });
+        
+        setStudents(studentData);
+      } catch (error) {
+        console.error("Error fetching students:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStudents();
+  }, []);
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+    <main className="min-h-screen p-8 bg-gray-50 text-gray-900">
+      
+      <header className="mb-10 border-b pb-4">
+        <h1 className="text-4xl font-bold text-slate-800">Mentorship Hub</h1>
+        <p className="text-slate-600 mt-2 text-lg">
+          Student Profiles & Assessment Tracking
+        </p>
+      </header>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        
+        <Link href="/new" className="bg-white p-6 rounded-xl shadow-sm border-2 border-dashed border-gray-300 flex flex-col items-center justify-center h-48 hover:bg-gray-50 transition-colors cursor-pointer">
+           <div className="bg-blue-100 text-blue-600 rounded-full w-12 h-12 flex items-center justify-center mb-3 text-2xl">
+             +
+           </div>
+           <span className="font-semibold text-gray-700">New Assessment</span>
+           <span className="text-sm text-gray-500 mt-1">Add student data</span>
+        </Link>
+
+        {loading && (
+          <div className="col-span-full mt-8 text-gray-500 text-center animate-pulse">
+            Loading student profiles...
+          </div>
+        )}
+
+        {!loading && students.map((student) => (
+          <Link href={`/student/${student.id}`} key={student.id} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col min-h-[12rem] hover:shadow-md transition-shadow cursor-pointer">
+             <h2 className="font-bold text-xl mb-1 capitalize">{student.name}</h2>
+             <p className="text-sm text-gray-500 mb-4">{student.major}</p>
+             
+             <div className="mt-auto space-y-2">
+               <p className="text-xs bg-green-50 text-green-800 p-2 rounded">
+                 <strong>MBTI:</strong> {student.aiProfile?.mbti_estimation || "Pending"}
+               </p>
+               <p className="text-xs bg-blue-50 text-blue-800 p-2 rounded truncate" title={student.aiProfile?.recommended_book}>
+                 <strong>Book:</strong> {student.aiProfile?.recommended_book || "Pending"}
+               </p>
+             </div>
+          </Link>
+        ))}
+
+      </div>
+    </main>
   );
 }
