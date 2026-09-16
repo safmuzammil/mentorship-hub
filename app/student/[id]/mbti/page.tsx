@@ -6,38 +6,53 @@ import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '../../../firebase';
 import Link from 'next/link';
 
+// Detailed MBTI Questions mapped to their specific trait dichotomy
+const mbtiQuestions = [
+  { trait: 'E_I', q: "1. At a large university networking event, you generally:", options: [{ text: "Talk to many different people and leave energized.", val: "E" }, { text: "Stick to a few people you know and leave feeling drained.", val: "I" }] },
+  { trait: 'E_I', q: "2. When solving a difficult problem, do you prefer to:", options: [{ text: "Talk it out loud with a group.", val: "E" }, { text: "Think it through silently on your own first.", val: "I" }] },
+  { trait: 'S_N', q: "3. If you were assigned a creative project, you would prefer:", options: [{ text: "Clear, step-by-step instructions on what is expected.", val: "S" }, { text: "A broad theme where you can invent your own approach.", val: "N" }] },
+  { trait: 'S_N', q: "4. In your free time, are you more drawn to:", options: [{ text: "Practical skills, real-world news, and actionable facts.", val: "S" }, { text: "Philosophy, future possibilities, and abstract concepts.", val: "N" }] },
+  { trait: 'T_F', q: "5. As a project leader, if a team member is underperforming, you:", options: [{ text: "Address the metrics and objectively critique their output.", val: "T" }, { text: "Check on their well-being and try to support them emotionally.", val: "F" }] },
+  { trait: 'T_F', q: "6. Which compliment means more to you?", options: [{ text: "You are highly competent and logical.", val: "T" }, { text: "You are a very warm and compassionate person.", val: "F" }] },
+  { trait: 'J_P', q: "7. When planning a weekend trip, you prefer to:", options: [{ text: "Have a strict itinerary booked in advance.", val: "J" }, { text: "Go with the flow and decide what to do when you get there.", val: "P" }] },
+  { trait: 'J_P', q: "8. When working on a major essay, your timeline usually looks like:", options: [{ text: "Steady progress, finishing well before the deadline.", val: "J" }, { text: "A massive burst of energy and pressure right at the deadline.", val: "P" }] },
+];
+
 export default function MbtiAssessment() {
   const params = useParams();
   const router = useRouter();
   const id = params.id as string;
 
-  const [eOrI, setEOrI] = useState('');
-  const [sOrN, setSOrN] = useState('');
-  const [tOrF, setTOrF] = useState('');
-  const [jOrP, setJOrP] = useState('');
+  const [answers, setAnswers] = useState<Record<number, string>>({});
   const [loading, setLoading] = useState(false);
+
+  const handleSelect = (qIndex: number, val: string) => {
+    setAnswers(prev => ({ ...prev, [qIndex]: val }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (Object.keys(answers).length < mbtiQuestions.length) {
+      alert("Please answer all questions."); return;
+    }
     setLoading(true);
-    
-    // Combine their answers into the 4-letter type
-    const mbtiResult = `${eOrI}${sOrN}${tOrF}${jOrP}`;
+
+    // Tally the scores
+    const scores = { E: 0, I: 0, S: 0, N: 0, T: 0, F: 0, J: 0, P: 0 };
+    Object.values(answers).forEach(val => { scores[val as keyof typeof scores]++; });
+
+    // Calculate final type
+    const type = `${scores.E >= scores.I ? 'E' : 'I'}${scores.S >= scores.N ? 'S' : 'N'}${scores.T >= scores.F ? 'T' : 'F'}${scores.J >= scores.P ? 'J' : 'P'}`;
     
     try {
       const docRef = doc(db, 'students', id);
       await updateDoc(docRef, {
-        mbtiAssessment: {
-          type: mbtiResult,
-          completedAt: new Date().toISOString()
-        }
+        mbtiAssessment: { type, detailedScores: scores, completedAt: new Date().toISOString() }
       });
-      
-      alert(`Success! MBTI Type logged as: ${mbtiResult}`);
+      alert(`Success! Calculated Type: ${type}`);
       router.push(`/student/${id}`);
     } catch (error) {
-      console.error("Error saving MBTI:", error);
-      alert("Error saving data. Check terminal.");
+      console.error(error); alert("Error saving data.");
     } finally {
       setLoading(false);
     }
@@ -45,86 +60,27 @@ export default function MbtiAssessment() {
 
   return (
     <main className="min-h-screen p-8 bg-gray-50 text-gray-900">
-      <div className="max-w-2xl mx-auto bg-white p-8 rounded-xl shadow-sm border border-gray-100">
-        <Link href={`/student/${id}`} className="text-purple-600 text-sm mb-6 inline-block hover:underline">
-          &larr; Back to Profile
-        </Link>
+      <div className="max-w-3xl mx-auto bg-white p-8 rounded-xl shadow-sm border border-gray-100">
+        <Link href={`/student/${id}`} className="text-purple-600 text-sm mb-6 inline-block hover:underline">&larr; Back to Profile</Link>
+        <h1 className="text-3xl font-bold text-purple-900 mb-2">Detailed MBTI Indicator</h1>
+        <p className="text-gray-600 mb-8">Select the option that most naturally fits the student's behavior.</p>
         
-        <h1 className="text-3xl font-bold text-purple-900 mb-2">MBTI Personality Indicator</h1>
-        <p className="text-gray-600 mb-8">Determine the student's psychological preferences in how they perceive the world and make decisions.</p>
-        
-        <form onSubmit={handleSubmit} className="space-y-8">
-          
-          {/* Energy (E vs I) */}
-          <div className="space-y-3">
-            <label className="block font-bold text-lg text-gray-800">1. After a long, exhausting week of classes, how do you recharge?</label>
-            <div className="flex gap-4">
-              <label className="flex-1 p-4 border rounded-lg cursor-pointer hover:bg-purple-50 flex flex-col items-center text-center">
-                <input type="radio" name="e_i" value="E" required onChange={(e) => setEOrI(e.target.value)} className="mb-2 w-4 h-4 text-purple-600" />
-                <span className="font-bold">Extrovert (E)</span>
-                <span className="text-sm text-gray-600 mt-1">Spending time with friends and socializing.</span>
-              </label>
-              <label className="flex-1 p-4 border rounded-lg cursor-pointer hover:bg-purple-50 flex flex-col items-center text-center">
-                <input type="radio" name="e_i" value="I" onChange={(e) => setEOrI(e.target.value)} className="mb-2 w-4 h-4 text-purple-600" />
-                <span className="font-bold">Introvert (I)</span>
-                <span className="text-sm text-gray-600 mt-1">Spending quiet time alone in my room.</span>
-              </label>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {mbtiQuestions.map((q, index) => (
+            <div key={index} className="bg-purple-50/30 p-6 rounded-lg border border-purple-50">
+              <label className="block font-bold text-lg text-gray-800 mb-3">{q.q}</label>
+              <div className="space-y-2">
+                {q.options.map((opt, oIndex) => (
+                  <label key={oIndex} className="flex items-center space-x-3 p-3 bg-white border rounded hover:bg-purple-50 cursor-pointer">
+                    <input type="radio" name={`q_${index}`} value={opt.val} onChange={() => handleSelect(index, opt.val)} className="w-4 h-4 text-purple-600" />
+                    <span>{opt.text}</span>
+                  </label>
+                ))}
+              </div>
             </div>
-          </div>
-
-          {/* Information (S vs N) */}
-          <div className="space-y-3">
-            <label className="block font-bold text-lg text-gray-800">2. When learning, what holds your attention more?</label>
-            <div className="flex gap-4">
-              <label className="flex-1 p-4 border rounded-lg cursor-pointer hover:bg-purple-50 flex flex-col items-center text-center">
-                <input type="radio" name="s_n" value="S" required onChange={(e) => setSOrN(e.target.value)} className="mb-2 w-4 h-4 text-purple-600" />
-                <span className="font-bold">Sensing (S)</span>
-                <span className="text-sm text-gray-600 mt-1">Practical facts, hard data, and concrete reality.</span>
-              </label>
-              <label className="flex-1 p-4 border rounded-lg cursor-pointer hover:bg-purple-50 flex flex-col items-center text-center">
-                <input type="radio" name="s_n" value="N" onChange={(e) => setSOrN(e.target.value)} className="mb-2 w-4 h-4 text-purple-600" />
-                <span className="font-bold">Intuition (N)</span>
-                <span className="text-sm text-gray-600 mt-1">Big-picture concepts, theories, and ideas.</span>
-              </label>
-            </div>
-          </div>
-
-          {/* Decisions (T vs F) */}
-          <div className="space-y-3">
-            <label className="block font-bold text-lg text-gray-800">3. When making a difficult decision, what do you prioritize?</label>
-            <div className="flex gap-4">
-              <label className="flex-1 p-4 border rounded-lg cursor-pointer hover:bg-purple-50 flex flex-col items-center text-center">
-                <input type="radio" name="t_f" value="T" required onChange={(e) => setTOrF(e.target.value)} className="mb-2 w-4 h-4 text-purple-600" />
-                <span className="font-bold">Thinking (T)</span>
-                <span className="text-sm text-gray-600 mt-1">Pure logic, consistency, and objective truth.</span>
-              </label>
-              <label className="flex-1 p-4 border rounded-lg cursor-pointer hover:bg-purple-50 flex flex-col items-center text-center">
-                <input type="radio" name="t_f" value="F" onChange={(e) => setTOrF(e.target.value)} className="mb-2 w-4 h-4 text-purple-600" />
-                <span className="font-bold">Feeling (F)</span>
-                <span className="text-sm text-gray-600 mt-1">Empathy, harmony, and how it affects others.</span>
-              </label>
-            </div>
-          </div>
-
-          {/* Lifestyle (J vs P) */}
-          <div className="space-y-3">
-            <label className="block font-bold text-lg text-gray-800">4. How do you approach your daily schedule?</label>
-            <div className="flex gap-4">
-              <label className="flex-1 p-4 border rounded-lg cursor-pointer hover:bg-purple-50 flex flex-col items-center text-center">
-                <input type="radio" name="j_p" value="J" required onChange={(e) => setJOrP(e.target.value)} className="mb-2 w-4 h-4 text-purple-600" />
-                <span className="font-bold">Judging (J)</span>
-                <span className="text-sm text-gray-600 mt-1">Strictly structured, planned, and organized.</span>
-              </label>
-              <label className="flex-1 p-4 border rounded-lg cursor-pointer hover:bg-purple-50 flex flex-col items-center text-center">
-                <input type="radio" name="j_p" value="P" onChange={(e) => setJOrP(e.target.value)} className="mb-2 w-4 h-4 text-purple-600" />
-                <span className="font-bold">Perceiving (P)</span>
-                <span className="text-sm text-gray-600 mt-1">Flexible, spontaneous, and adaptable.</span>
-              </label>
-            </div>
-          </div>
-
-          <button type="submit" disabled={loading} className="w-full bg-purple-600 text-white font-bold py-4 rounded-lg hover:bg-purple-700 disabled:bg-purple-300 transition-colors">
-            {loading ? "Calculating Profile..." : "Log MBTI Profile"}
+          ))}
+          <button type="submit" disabled={loading} className="w-full bg-purple-600 text-white font-bold py-4 rounded-lg hover:bg-purple-700 disabled:bg-purple-300">
+            {loading ? "Calculating..." : "Calculate MBTI"}
           </button>
         </form>
       </div>

@@ -117,6 +117,15 @@ export default function StudentDetail() {
                 Start Test &rarr;
               </Link>
             </div>
+            <div className="bg-green-50 p-6 rounded-xl shadow-sm border border-green-100 flex justify-between items-center mb-6">
+              <div>
+                <h2 className="font-bold text-lg text-green-900">Spiritual Indicator</h2>
+                <p className="text-sm text-green-700">Determine Tarbiyah metrics</p>
+              </div>
+              <Link href={`/student/${id}/spiritual`} className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm hover:bg-green-700">
+                Start Test &rarr;
+              </Link>
+            </div>
             {/* Goals Tracker */}
             <div className="bg-amber-50 p-6 rounded-xl shadow-sm border border-amber-100">
               <h2 className="font-bold text-lg mb-4 text-amber-900">Active Goals</h2>
@@ -134,6 +143,7 @@ export default function StudentDetail() {
                 <button onClick={handleAddGoal} className="bg-amber-600 text-white px-3 py-2 rounded text-sm font-bold">+</button>
               </div>
             </div>
+            
 
             {/* Achievements Tracker */}
             <div className="bg-emerald-50 p-6 rounded-xl shadow-sm border border-emerald-100">
