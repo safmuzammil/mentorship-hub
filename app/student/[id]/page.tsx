@@ -94,7 +94,16 @@ export default function StudentDetail() {
 
           {/* Right Column: Goals & Achievements */}
           <div className="space-y-6">
-            
+            {/* Quick Assessments */}
+            <div className="bg-blue-50 p-6 rounded-xl shadow-sm border border-blue-100 mb-6 flex justify-between items-center">
+              <div>
+                <h2 className="font-bold text-lg text-blue-900">VARK Assessment</h2>
+                <p className="text-sm text-blue-700">Determine learning style</p>
+              </div>
+              <Link href={`/student/${id}/vark`} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm hover:bg-blue-700">
+                Start Test &rarr;
+              </Link>
+            </div>
             {/* Goals Tracker */}
             <div className="bg-amber-50 p-6 rounded-xl shadow-sm border border-amber-100">
               <h2 className="font-bold text-lg mb-4 text-amber-900">Active Goals</h2>
