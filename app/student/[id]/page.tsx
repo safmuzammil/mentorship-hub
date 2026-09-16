@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { doc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { db } from '../../firebase';
-
+const [generatingPlan, setGeneratingPlan] = useState(false);
 export default function StudentDetail() {
   const params = useParams();
   const id = params.id as string;
@@ -49,6 +49,30 @@ export default function StudentDetail() {
     setNewAchievement('');
   };
 
+  const handleGeneratePlan = async () => {
+  setGeneratingPlan(true);
+  try {
+    const res = await fetch('/api/plan', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ student })
+    });
+    const data = await res.json();
+
+    if (data.plan) {
+      // Save the generated plan to Firebase
+      const docRef = doc(db, 'students', id);
+      await updateDoc(docRef, { semesterPlan: data.plan });
+      setStudent({ ...student, semesterPlan: data.plan });
+    }
+   } catch (error) {
+    console.error("Failed to generate plan", error);
+    alert("Error generating plan.");
+   } finally {
+    setGeneratingPlan(false);
+   }
+  };
+
   if (loading) return <div className="p-8 text-center mt-10">Loading profile...</div>;
   if (!student) return <div className="p-8 text-center mt-10">Student not found.</div>;
 
@@ -77,8 +101,9 @@ export default function StudentDetail() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           
-          {/* Left Column: AI Analysis */}
+         {/* Left Column: AI Analysis */}
           <div className="lg:col-span-2 space-y-6">
+            
             <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-l-blue-500">
               <h2 className="font-bold text-lg mb-2">Academic Analysis</h2>
               <p className="text-gray-700 whitespace-pre-wrap">{student.aiProfile?.academic_analysis || "No data yet. Complete the assessments to generate insights."}</p>
@@ -88,8 +113,33 @@ export default function StudentDetail() {
               <h2 className="font-bold text-lg mb-2">Spiritual Analysis</h2>
               <p className="text-gray-700 whitespace-pre-wrap">{student.aiProfile?.spiritual_analysis || "No data yet. Complete the spiritual indicator to generate insights."}</p>
             </div>
-          </div>
 
+            {/* Semester Action Plan Box (THIS IS THE NEW PART) */}
+            <div className="bg-slate-900 p-6 rounded-xl shadow-sm text-white mt-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="font-bold text-xl text-yellow-400">Semester Action Plan</h2>
+                <button 
+                  onClick={handleGeneratePlan} 
+                  disabled={generatingPlan}
+                  className="bg-yellow-500 text-slate-900 px-4 py-2 rounded-lg text-sm font-bold shadow-sm hover:bg-yellow-400 disabled:bg-slate-700 disabled:text-slate-500 transition"
+                >
+                  {generatingPlan ? "🤖 Gemini is thinking..." : "✨ Generate AI Plan"}
+                </button>
+              </div>
+              
+              {student.semesterPlan ? (
+                <div className="prose prose-invert max-w-none text-gray-300 whitespace-pre-wrap">
+                  {student.semesterPlan}
+                </div>
+              ) : (
+                <p className="text-gray-400 italic">No plan generated yet. Ensure all assessments are complete, then click generate to get AI-powered book recommendations and routines.</p>
+              )}
+            </div>
+
+          </div>
+          {/* END OF LEFT COLUMN */}
+
+          {/* Right Column: Tests, Goals & Achievements */}
           {/* Right Column: Tests, Goals & Achievements */}
           <div className="space-y-6">
             
