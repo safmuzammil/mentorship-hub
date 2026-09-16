@@ -87,8 +87,12 @@ export default function StudentDetail() {
             </div>
             
             <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-l-green-500">
-              <h2 className="font-bold text-lg mb-2">Spiritual Analysis</h2>
-              <p className="text-gray-700">{student.aiProfile?.spiritual_analysis || "No data yet."}</p>
+              <span className="inline-block mt-4 bg-slate-800 text-white text-sm px-3 py-1 rounded-full mr-2">
+              {student.mbtiAssessment?.type || student.aiProfile?.mbti_estimation || "MBTI Pending"}
+            </span>
+            <span className="inline-block mt-4 bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full">
+              {student.varkAssessment?.primaryStyle || "VARK Pending"}
+            </span>
             </div>
           </div>
 
