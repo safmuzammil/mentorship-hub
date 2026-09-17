@@ -27,6 +27,7 @@ export async function POST(req: Request) {
     `;
 
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${process.env.GEMINI_API_KEY}`, {
+      method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }]
@@ -35,13 +36,13 @@ export async function POST(req: Request) {
 
     const data = await response.json();
 
-    // NEW: Check if Google sent an error instead of a plan!
+    // Safely catch Google API errors
     if (!response.ok || data.error) {
       console.error("🔴 GOOGLE API ERROR:", data.error || data);
       return NextResponse.json({ plan: null, error: data.error?.message || "Google API refused the request." }, { status: 400 });
     }
 
-    // NEW: Safely check if the candidates array exists
+    // Safely check if the AI returned a valid answer
     if (!data.candidates || !data.candidates[0]) {
       console.error("🔴 UNEXPECTED GOOGLE FORMAT:", data);
       return NextResponse.json({ plan: null, error: "AI returned an empty response." }, { status: 500 });
