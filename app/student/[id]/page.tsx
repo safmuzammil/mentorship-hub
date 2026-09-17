@@ -5,17 +5,21 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { doc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { db } from '../../firebase';
-const [generatingPlan, setGeneratingPlan] = useState(false);
+
 export default function StudentDetail() {
   const params = useParams();
   const id = params.id as string;
   
+  // State variables for the page
   const [student, setStudent] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  
   const [newGoal, setNewGoal] = useState('');
   const [newAchievement, setNewAchievement] = useState('');
+  
+  // NEW: State for the AI generator
+  const [generatingPlan, setGeneratingPlan] = useState(false);
 
+  // Fetch the student data on load
   useEffect(() => {
     const fetchStudent = async () => {
       try {
@@ -33,6 +37,7 @@ export default function StudentDetail() {
     if (id) fetchStudent();
   }, [id]);
 
+  // Handlers for Goals and Achievements
   const handleAddGoal = async () => {
     if (!newGoal.trim()) return;
     const docRef = doc(db, 'students', id);
@@ -49,28 +54,30 @@ export default function StudentDetail() {
     setNewAchievement('');
   };
 
+  // NEW: Handler for calling the AI API
   const handleGeneratePlan = async () => {
-  setGeneratingPlan(true);
-  try {
-    const res = await fetch('/api/plan', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ student })
-    });
-    const data = await res.json();
-
-    if (data.plan) {
-      // Save the generated plan to Firebase
-      const docRef = doc(db, 'students', id);
-      await updateDoc(docRef, { semesterPlan: data.plan });
-      setStudent({ ...student, semesterPlan: data.plan });
+    setGeneratingPlan(true);
+    try {
+      const res = await fetch('/api/plan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ student })
+      });
+      const data = await res.json();
+      
+      if (data.plan) {
+        const docRef = doc(db, 'students', id);
+        await updateDoc(docRef, { semesterPlan: data.plan });
+        setStudent({ ...student, semesterPlan: data.plan });
+      } else {
+        alert("Could not generate plan. Please ensure you added your GEMINI_API_KEY to Vercel.");
+      }
+    } catch (error) {
+      console.error("Failed to generate plan", error);
+      alert("Error connecting to the AI generator.");
+    } finally {
+      setGeneratingPlan(false);
     }
-   } catch (error) {
-    console.error("Failed to generate plan", error);
-    alert("Error generating plan.");
-   } finally {
-    setGeneratingPlan(false);
-   }
   };
 
   if (loading) return <div className="p-8 text-center mt-10">Loading profile...</div>;
@@ -101,9 +108,8 @@ export default function StudentDetail() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           
-         {/* Left Column: AI Analysis */}
+          {/* Left Column: AI Analysis & Semester Plan */}
           <div className="lg:col-span-2 space-y-6">
-            
             <div className="bg-white p-6 rounded-xl shadow-sm border-l-4 border-l-blue-500">
               <h2 className="font-bold text-lg mb-2">Academic Analysis</h2>
               <p className="text-gray-700 whitespace-pre-wrap">{student.aiProfile?.academic_analysis || "No data yet. Complete the assessments to generate insights."}</p>
@@ -114,7 +120,7 @@ export default function StudentDetail() {
               <p className="text-gray-700 whitespace-pre-wrap">{student.aiProfile?.spiritual_analysis || "No data yet. Complete the spiritual indicator to generate insights."}</p>
             </div>
 
-            {/* Semester Action Plan Box (THIS IS THE NEW PART) */}
+            {/* Semester Action Plan Box */}
             <div className="bg-slate-900 p-6 rounded-xl shadow-sm text-white mt-6">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="font-bold text-xl text-yellow-400">Semester Action Plan</h2>
@@ -132,18 +138,14 @@ export default function StudentDetail() {
                   {student.semesterPlan}
                 </div>
               ) : (
-                <p className="text-gray-400 italic">No plan generated yet. Ensure all assessments are complete, then click generate to get AI-powered book recommendations and routines.</p>
+                <p className="text-gray-400 italic">No plan generated yet. Ensure assessments are complete, then click generate to get AI-powered book recommendations and routines.</p>
               )}
             </div>
-
           </div>
-          {/* END OF LEFT COLUMN */}
 
-          {/* Right Column: Tests, Goals & Achievements */}
           {/* Right Column: Tests, Goals & Achievements */}
           <div className="space-y-6">
             
-            {/* Assessment Buttons */}
             <div className="space-y-3">
               <div className="bg-blue-50 p-4 rounded-xl shadow-sm border border-blue-100 flex justify-between items-center">
                 <div>
@@ -176,7 +178,6 @@ export default function StudentDetail() {
               </div>
             </div>
 
-            {/* Goals Tracker */}
             <div className="bg-amber-50 p-6 rounded-xl shadow-sm border border-amber-100">
               <h2 className="font-bold text-lg mb-4 text-amber-900">Active Goals</h2>
               <ul className="list-disc pl-5 space-y-2 text-amber-900 mb-4 text-sm">
@@ -188,7 +189,6 @@ export default function StudentDetail() {
               </div>
             </div>
 
-            {/* Achievements Tracker */}
             <div className="bg-emerald-50 p-6 rounded-xl shadow-sm border border-emerald-100">
               <h2 className="font-bold text-lg mb-4 text-emerald-900">Achievements</h2>
               <ul className="list-disc pl-5 space-y-2 text-emerald-900 mb-4 text-sm">
