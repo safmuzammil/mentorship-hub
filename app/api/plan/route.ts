@@ -26,7 +26,8 @@ export async function POST(req: Request) {
       Suggest 2 daily actionable habits to specifically overcome their stated Tarbiyah/Fajr struggles.
     `;
 
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${process.env.GEMINI_API_KEY}`, {
+    // Restored the correct, modern 1.5-flash model with the POST method intact!
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -36,13 +37,11 @@ export async function POST(req: Request) {
 
     const data = await response.json();
 
-    // Safely catch Google API errors
     if (!response.ok || data.error) {
       console.error("🔴 GOOGLE API ERROR:", data.error || data);
       return NextResponse.json({ plan: null, error: data.error?.message || "Google API refused the request." }, { status: 400 });
     }
 
-    // Safely check if the AI returned a valid answer
     if (!data.candidates || !data.candidates[0]) {
       console.error("🔴 UNEXPECTED GOOGLE FORMAT:", data);
       return NextResponse.json({ plan: null, error: "AI returned an empty response." }, { status: 500 });
